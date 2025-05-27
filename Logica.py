@@ -16,6 +16,7 @@ No_de_identidad = []
 actividad = []
 Cant_actividad = []
 
+
 def reg_usuario():
 
 
