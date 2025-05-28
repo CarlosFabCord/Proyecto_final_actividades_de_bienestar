@@ -1,37 +1,34 @@
-import random
-import math
-import csv
-import os
 import pandas as pd
-from tkinter.scrolledtext import ScrolledText
-import io
+import os
+import tkinter as tk
+from tkinter import messagebox
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-base_personas = "base_de_usuarios.csv"
+class graficos:
+  def init(self, data_frame):
+    self.df= data_frame
 
-def reg_usuario():
+  def graficar_barras(self):
+    df = pd.read_csv(base_facturacion)
+    db = pd.read_csv(base_personas)
+    edad = db["Edad"]
+    cantidad_clases = df['Clases Spinning','Clases Fisioterapia','Clases Rumba','Clases Fortalecimiento']
+    clases = ['Spinning','Fisioterapia','Rumba','Fortalecimiento']
+    grafico, ax = plt.subplots(1, 3, figsize=(9,3), dpi=100) 
+    sns.barplot(data= self.df, x= clases , y= cantidad_clases, ax=ax[0])
+    ax[0].set_title("Grafico de usuarios por clase", fontsize=7)
+    ax[0].set_xlabel(clases, fontsize=6)
+    ax[0].set_ylabel(cantidad_clases, fontsize=6)
+    ax[0].tick_params(axis='x', labelsize=6)
 
+    sns.histplot(edad, bins = 10, kde = True, ax =ax[1])
+    ax[1].title("Histograma de edades")
+    ax[1].set_xlabel("Edades", fontsize=7)
+    ax[1].set_ylabel("Frecuencia", fontsize=7)
 
-    num_identidad = str(id_usuario.get())
-    nombre = nombre_usuario.get()
-    edad = edad_usuario.get()
-    meses = meses_usuario.get()
-
-
-
-    fila = {
-        'No. identidad': num_identidad,
-        'Nombre': nombre,
-        'Edad': edad,
-        'Meses': meses,
-        'Monto acumulado': 0
-    }
-
-
-    # Verificar si ya existe el archivo
-    archivo_existe = os.path.isfile(base_personas)
-
-    with open(base_personas, 'a', newline='') as f:
-        escritor = csv.DictWriter(f, fieldnames=fila.keys())
-        if not archivo_existe:
-            escritor.writeheader()
-        escritor.writerow(fila)
+    colores = ["red","green", "blue"]
+    ax[2].pie(cantidad_clases, labels=cantidad_clases.index, colors=colores, shadow=True, textprops={'fontsize':6})
+    ax[2].set_title("Inscripciones por actividad")
+    grafico.tight_layout()   
+    return pasar_a_pil(grafico)

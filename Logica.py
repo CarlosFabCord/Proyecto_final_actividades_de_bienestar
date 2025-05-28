@@ -125,11 +125,6 @@ class usuario():
             
             
             
-            ##################################################### ANÁLISIS ESTADÍSTICO #################################################
+           
 
 
-class graficos(usuario_analisis):
-   df = pd.read_csv(base_facturacion)
-   cantidad_clases = df['Clases Spinning','Clases Fisioterapia','Clases Rumba','Clases Rortalecimiento']
-    
-    plt.plotbar()
