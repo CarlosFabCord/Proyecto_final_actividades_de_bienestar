@@ -125,21 +125,51 @@ class Analisis():
 
   def graficar_barras(self):
 
-    cantidad_clases = self.base_facturacion['Clases Spinning','Clases Fisioterapia','Clases Rumba','Clases Fortalecimiento']
-    clases = ['Spinning','Fisioterapia','Rumba','Fortalecimiento']
-    grafico, ax = plt.subplots(1, 3, figsize=(9,3), dpi=100) 
-    sns.barplot(data= self.df, x= clases , y= cantidad_clases, ax=ax[0])
-    ax[0].set_title("Grafico de usuarios por clase", fontsize=7)
-    ax[0].set_xlabel(clases, fontsize=6)
-    ax[0].set_ylabel(cantidad_clases, fontsize=6)
-    ax[0].tick_params(axis='x', labelsize=6)
 
-    colores = ["red","green", "blue"]
-    ax[1].pie(cantidad_clases, labels=cantidad_clases.index, colors=colores, shadow=True, textprops={'fontsize':6})
-    ax[1].set_title("Inscripciones por actividad")
-    grafico.tight_layout()   
-    return pasar_a_pil(grafico)
-  
+    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="RUMBA"]
+    sin_duplicados_rumba=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
+
+    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="SPINING"]
+    sin_duplicados_spining=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
+
+    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FORTALECIMIENTO"]
+    sin_duplicados_fortalecimiento=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
+
+    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FISIOTERAPIA"]
+    sin_duplicados_fisioterapia=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
+
+
+    df_rumba=pd.DataFrame(sin_duplicados_rumba)
+    df_spining=pd.DataFrame(sin_duplicados_spining)
+    df_fortalecimiento=pd.DataFrame(sin_duplicados_fortalecimiento)
+    df_fisioterapia=pd.DataFrame(sin_duplicados_fisioterapia)
+    df_rumba['No. de identidad'].value_counts().sum()
+    valor_rumba = df_rumba['No. de identidad'].value_counts().sum()
+    valor_spining = df_spining['No. de identidad'].value_counts().sum()
+    valor_fortalecimiento = df_fortalecimiento['No. de identidad'].value_counts().sum()
+    valor_fisioterapia = df_fisioterapia['No. de identidad'].value_counts().sum()
+
+    diccionario_valores = {
+    'Rumba': int(valor_rumba),
+    'Spinning': int(valor_spining),
+    'Fortalecimiento': int(valor_fortalecimiento),
+    'Fisioterapia': int(valor_fisioterapia)
+    }
+
+    db = pd.DataFrame(diccionario_valores)
+    cantidad_clases = db[['Rumba', 'Spinning', 'Fortalecimiento', 'Fisioterapia']]
+    clases = ['Spinning','Fisioterapia','Rumba','Fortalecimiento']
+    sns.barplot(data= db, x= clases , y= cantidad_clases)
+    plt.title("Grafico de usuarios por clase", fontsize=7)
+    plt.xlabel(clases, fontsize=6)
+    plt.ylabel(cantidad_clases, fontsize=6)
+    plt.tick_params(axis='x', labelsize=6)
+
+  def grafico_circular(self): 
+    
+    colores = ["red","green", "blue", "yellow"]
+    plt.pie(self.base_facturacion['Actividad'], labels=self.base_facturacion['Actividad'].index, colors=colores, shadow=True, textprops={'fontsize':6})
+    plt.title("Inscripciones por actividad")
 
   def total_usuarios(self):
     cantidad_total = self.df['No. identidad'].sum()
