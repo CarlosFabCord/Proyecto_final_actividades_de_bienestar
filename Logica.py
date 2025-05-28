@@ -32,7 +32,7 @@ class usuario():
         
         else:
            arc_inexistente="El archivo no se ha creado aún. Registre al menos un usuario"
-           
+           messagebox.showerror("Error", arc_inexistente)
 
     except IndexError:
       messagebox.showerror("Error", "El usuario no existe")###
@@ -72,7 +72,7 @@ class usuario():
 
             else:
                 arc_inexistente="El archivo no se ha creado aún. Registre al menos un proyecto"
-            
+                messagebox.showerror("Error", arc_inexistente)
 
         except IndexError:
                 messagebox.showerror("Error", "El proyecto no existe")

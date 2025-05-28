@@ -23,17 +23,20 @@ class Analisis:
 
 
   def graficar_barras(self):
+    
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)
+    
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="RUMBA"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="RUMBA"]
     sin_duplicados_rumba=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="SPINING"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="SPINING"]
     sin_duplicados_spining=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FORTALECIMIENTO"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="FORTALECIMIENTO"]
     sin_duplicados_fortalecimiento=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FISIOTERAPIA"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="FISIOTERAPIA"]
     sin_duplicados_fisioterapia=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
 
@@ -41,7 +44,7 @@ class Analisis:
     df_spining=pd.DataFrame(sin_duplicados_spining)
     df_fortalecimiento=pd.DataFrame(sin_duplicados_fortalecimiento)
     df_fisioterapia=pd.DataFrame(sin_duplicados_fisioterapia)
-    df_rumba['No. de identidad'].value_counts().sum()
+    
     valor_rumba = df_rumba['No. de identidad'].value_counts().sum()
     valor_spining = df_spining['No. de identidad'].value_counts().sum()
     valor_fortalecimiento = df_fortalecimiento['No. de identidad'].value_counts().sum()
@@ -66,37 +69,53 @@ class Analisis:
   
   def grafico_circular(self): 
     
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)
     colores = ["red","green", "blue", "yellow"]
-    grafico = plt.pie(self.base_facturacion['Actividad'], labels=self.base_facturacion['Actividad'].index, colors=colores, shadow=True, textprops={'fontsize':6})
+    grafico = plt.pie(DataFrame_facturacion['Actividad'], labels=DataFrame_facturacion['Actividad'].index, colors=colores, shadow=True, textprops={'fontsize':6})
     plt.title("Inscripciones por actividad")
     return pasar_a_pil(grafico)
 
   def total_usuarios(self):
-    cantidad_total = self.base_personas['No. identidad'].sum()
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+    cantidad_total = DataFrame_personas['No. identidad'].count()
     return cantidad_total
     
-  def incompletos(self):                                             
+  def incompletos(self):
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+
     columnas_verificar = ["No. identidad", "Nombre", "Edad", "Meses"]
   
-    filas_nulos = self.base_personas[self.base_personas[columnas_verificar].isnull().any(axis=1)]
+    filas_nulos = DataFrame_personas[DataFrame_personas[columnas_verificar].isnull().any(axis=1)]
+    print(filas_nulos)
 
     cantidad_filas_nulas = len(filas_nulos)
 
     return cantidad_filas_nulas
 
   def promedio_pagos(self):
-    pagos = self.base_personas["Valor_acomulado"].sum()
-    promedio = pagos/len(self.base_personas["Valor_acomulado"])
-    return promedio
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+    promedio = DataFrame_personas["Monto acumulado"].mean()
     
-  def actividad_mas_demandada(self):
-    actividad = max(self.base_facturacion["Actividad"].value_counts().tolist())
+    return round(promedio, 1)
+    
+  def actividad_mas_demandada(self):   
+    
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)
+    conteo = DataFrame_facturacion["Actividad"].value_counts()
+    actividad_mas_inscrita = conteo.idxmax() 
+    actividad = actividad_mas_inscrita
+
     return actividad
   
-  def mas_paga(self):
+  def mas_paga(self):      
+      
       archivo_existe = os.path.isfile(self.base_personas)
       if archivo_existe==True:
-        pagos =  max(self.base_personas["Valor acomulado"].tolist())
+        DataFrame_personas = pd.read_csv(self.base_personas)
+        pagos =  max(DataFrame_personas["Monto acumulado"].tolist())
         return pagos
       else:
         messagebox.showerror("Error", "El archivo no existe")

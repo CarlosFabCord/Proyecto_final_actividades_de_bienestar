@@ -93,29 +93,13 @@ def enviar():
           df = pd.read_csv(base_personas)
           num_identidad = cedula_usuario_fact.get()
           
-          try:              
+          try: 
+              #Acumula el costo y los meses al archivo base personas:             
               df['No.identidad'] = df['No. identidad'].astype(str)
               indice = df['No. identidad']==num_identidad
               df.loc[indice, 'Meses']+=1
                 
-              #Aquí identifica existencia de archivo facturación y añade diccionario a csv
 
-              archivo_existe = os.path.isfile(base_facturacion)
-
-              with open(base_facturacion, 'a', newline='') as f: ###############
-                  escritor = csv.DictWriter(f, fieldnames=fila.keys())
-                  if not archivo_existe:
-                      escritor.writeheader()
-                  for i in range(len(no_de_identidad)):
-                      fila = {
-                            'No. de identidad': no_de_identidad[i],
-                            'Actividad': actividad[i],
-                            'Cant. Actividad': Cant_actividad[i],                            
-                        }
-
-                  escritor.writerow(fila)
-
-                
               clases_spinning = 7000
               clases_fisioterapia = 10000
               clases_rumba = 5000
@@ -136,9 +120,33 @@ def enviar():
                 
               etiqueta_total.set(calcular_total)
 
-                
               df.loc[indice, 'Monto acumulado']+=calcular_total
               df.to_csv(base_personas, index=False)
+
+              #Aquí identifica existencia de archivo facturación y añade diccionario de fila a csv
+
+              fila = {
+                            'No. de identidad': [],
+                            'Actividad': [],
+                            'Cant. Actividad': [],                            
+                        }
+
+              archivo_existe = os.path.isfile(base_facturacion)
+
+              with open(base_facturacion, 'a', newline='') as f: ###############
+                  escritor = csv.DictWriter(f, fieldnames=fila.keys())
+                  if not archivo_existe:
+                      escritor.writeheader()
+                  for i in range(len(no_de_identidad)):
+                      fila = {
+                            'No. de identidad': no_de_identidad[i],
+                            'Actividad': actividad[i],
+                            'Cant. Actividad': Cant_actividad[i],                            
+                        }
+
+                      escritor.writerow(fila)      
+                           
+              
 
               break
           except:
@@ -238,23 +246,33 @@ def abrir_ventana_secundaria(): #######------#######
 
 def actualizar():
 
-    global base_personas
-    global base_facturacion
+    global base_personas,base_facturacion   
 
-    incompletos = an.Analisis(base_personas).incompletos()  
+
+
+    incompletos = an.Analisis(base_personas,base_facturacion).incompletos()  
     data_incomp.set(incompletos)
 
-    cliente_max_paga = an.Analisis(base_personas).mas_paga()
+    cliente_max_paga = an.Analisis(base_personas,base_facturacion).mas_paga()
     user_etiq_max.set(cliente_max_paga)
 
-    total_usuarios_fun = an.Analisis(base_personas).total_usuarios()
+    total_usuarios_fun = an.Analisis(base_personas,base_facturacion).total_usuarios()
     user_total.set(total_usuarios_fun)
 
-    grafico_derecha = an.Analisis(base_personas).graficar_barras()
+    prome_de_pagos=an.Analisis(base_personas, base_facturacion).promedio_pagos()
+    data_prom.set(prome_de_pagos)
+
+    grafico_derecha = an.Analisis(base_personas,base_facturacion).graficar_barras()
     mostrar_imagenes_graf_1(grafico_derecha)
 
-    grafico_izquierda = an.Analisis(base_facturacion).grafico_circular()
+    grafico_izquierda = an.Analisis(base_personas,base_facturacion).grafico_circular()
     mostrar_imagenes_graf_2(grafico_izquierda)
+
+    act_mas_demandada = an.Analisis(base_personas, base_facturacion).actividad_mas_demandada()
+    mas_demanda.set(str(act_mas_demandada))
+    
+
+
 
     
 
@@ -380,7 +398,7 @@ etiq_usuar_totales = tk.Label(frame_primero, bg="white", text="Usuarios totales"
 etiq_usuar_totales.place(x=67, y=107)
 
 user_total = tk.IntVar()
-user_etiq_max_label=tk.Label(frame_primero, bg="white", textvariable=user_etiq_max, font= ("Calibri", 18, "bold") ) ########
+user_etiq_max_label=tk.Label(frame_primero, bg="white", textvariable=user_total, font= ("Calibri", 18, "bold") ) ########
 user_etiq_max_label.place(x=70, y=128)
 
 frame_sup_2 = tk.Frame(frame_primero, bg="white", width=185, height=158)
@@ -399,8 +417,8 @@ frame_sup_3.place(x=433, y=15)
 etiq_pago_promedio = tk.Label(frame_primero, bg="white", text="Pago promedio", font=("Calibri", 11, "bold"))
 etiq_pago_promedio.place(x=462, y=107)
 
-data_prom = tk.IntVar()
-user_etiq_prom=tk.Label(frame_primero, bg="white", textvariable=user_etiq_max, font= ("Calibri", 18, "bold") )  #########
+data_prom = tk.DoubleVar()
+user_etiq_prom=tk.Label(frame_primero, bg="white", textvariable=data_prom, font= ("Calibri", 18, "bold") )  #########
 user_etiq_prom.place(x=465, y=128)
 
 frame_sup_4 = tk.Frame(frame_primero, bg="white", width=148, height=158)
@@ -409,8 +427,8 @@ frame_sup_4.place(x=623, y=15)
 etiq_mas_demandada = tk.Label(frame_primero, bg="white", text="Más demandada", font=("Calibri", 11, "bold"))
 etiq_mas_demandada.place(x=644, y=107)
 
-mas_demanda = tk.IntVar()
-mas_demanda_etiq=tk.Label(frame_primero, bg="white", textvariable=user_etiq_max, font= ("Calibri", 18, "bold") )  ##########
+mas_demanda = tk.StringVar()
+mas_demanda_etiq=tk.Label(frame_primero, bg="blue", textvariable=mas_demanda, font= ("Calibri", 18, "bold") )  ##########
 mas_demanda_etiq.place(x=643, y=128)
 
 
