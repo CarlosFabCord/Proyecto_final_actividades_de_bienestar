@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
                     ################################ TRABAJAR CON REGISTROS #################################################
 
 class usuario():
-   def _init_(self, buscar, base_personas, base_facturacion, nombre_de_buscado, edad_de_buscado):
+   def __init__(self, buscar, base_personas, base_facturacion, nombre_de_buscado, edad_de_buscado):
         
         self.buscar=buscar
         self.base_personas=base_personas
@@ -112,7 +112,7 @@ class usuario():
                 data.drop(index=indice, inplace=True)
                 data.drop(index=indice_fac, inplace=True)
                 data.to_csv(self.base_personas, index=False)
-                data.to_csv(self.base_facturacion, index=False)
+                data_fac.to_csv(self.base_facturacion, index=False)
 
             else:
                 arc_inexistente="El archivo no se ha creado aún. Registre al menos un usuario"

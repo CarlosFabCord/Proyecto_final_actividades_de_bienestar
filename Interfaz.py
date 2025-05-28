@@ -13,12 +13,13 @@ import io
 from tkinter.scrolledtext import ScrolledText
 import Logica as log
 from PIL import ImageTk
+import Analisis as an
 
 ######################### PRELIMINARES ###############################################
 
 base_facturacion="base_de_facturaciones.csv"
 base_personas = "base_de_usuarios.csv"
-no_de_identidad = []
+no_de_identidad = [] ####
 actividad = []
 Cant_actividad = []
 
@@ -28,7 +29,7 @@ Cant_actividad = []
 
 def reg_usuario():
 
-
+    
     num_identidad = str(id_usuario.get())
     nombre = nombre_usuario.get()
     edad = edad_usuario.get()
@@ -53,9 +54,14 @@ def reg_usuario():
         if not archivo_existe:
             escritor.writeheader()
         escritor.writerow(fila)
+        
+    id_usuario.set("")
+    nombre_usuario.set("")
+    edad_usuario.set("")
+    meses_usuario.set("")
 
 
-######################### BOTÓN DE FACTURACIÓN ##################################
+######################### BOTÓN DE GUARDAR ##################################
 
 def guardar():
 
@@ -63,8 +69,8 @@ def guardar():
   global actividad
   global Cant_actividad
 
-  no_de_identidad.append(cedula_usuario.get())
-  actividad.append(actividad_lista.get())
+  no_de_identidad.append(cedula_usuario_fact.get())
+  actividad.append(lista_actividad.get())
   Cant_actividad.append(cant_actividad.get())
 
 ########################### BOTÓN DE ENVIAR ################################
@@ -85,17 +91,18 @@ def enviar():
   else:
       while True:
           df = pd.read_csv(base_personas)
-          try:
-              num_identidad = cedula_usuario.get()
+          num_identidad = cedula_usuario_fact.get()
+          
+          try:              
               df['No.identidad'] = df['No. identidad'].astype(str)
               indice = df['No. identidad']==num_identidad
               df.loc[indice, 'Meses']+=1
                 
-              #Aquí identifica existencia de facturación y añade diccionario a csv
+              #Aquí identifica existencia de archivo facturación y añade diccionario a csv
 
               archivo_existe = os.path.isfile(base_facturacion)
 
-              with open(base_facturacion, 'a', newline='') as f:
+              with open(base_facturacion, 'a', newline='') as f: ###############
                   escritor = csv.DictWriter(f, fieldnames=fila.keys())
                   if not archivo_existe:
                       escritor.writeheader()
@@ -187,7 +194,7 @@ def eliminar_usuario():
     log.usuario(buscar, base_personas, base_facturacion, nombre_de_buscado, edad_de_buscado).elim_usuario()
 
 
-##########################################################################################################
+################################ BOTON MODIFICAR USUARIO ###########################################################
  
  #Ingredientes
 #base_facturacion="base_de_facturaciones.csv"
@@ -209,8 +216,9 @@ def modificar_usuario():
     
     log.usuario(buscar, base_personas, base_facturacion, nombre_de_buscado, edad_de_buscado).editar_datos()
 
+################################### BOTÓN GENERAR LISTADO ################################################
 
-def abrir_ventana_secundaria():
+def abrir_ventana_secundaria(): #######------#######
  
     df = pd.read_csv(base_personas)
     nueva_ventana = tk.Toplevel()
@@ -226,9 +234,29 @@ def abrir_ventana_secundaria():
     
     tk.Button(nueva_ventana, text="Cerrar", command=nueva_ventana.destroy).pack()
 
-def prueba_botones():
-    print("funciona")
-##### No olvide quietar 
+############################### BOTÓN DE ACTUALIZAR ######################################################
+
+def actualizar():
+
+    global base_personas
+    global base_facturacion
+
+    incompletos = an.Analisis(base_personas).incompletos()  
+    data_incomp.set(incompletos)
+
+    cliente_max_paga = an.Analisis(base_personas).mas_paga()
+    user_etiq_max.set(cliente_max_paga)
+
+    total_usuarios_fun = an.Analisis(base_personas).total_usuarios()
+    user_total.set(total_usuarios_fun)
+
+    grafico_derecha = an.Analisis(base_personas).graficar_barras()
+    mostrar_imagenes_graf_1(grafico_derecha)
+
+    grafico_izquierda = an.Analisis(base_facturacion).grafico_circular()
+    mostrar_imagenes_graf_2(grafico_izquierda)
+
+    
 
 def mostrar_imagenes_graf_1(pil_img):
   image_tk = ImageTk.PhotoImage(pil_img)
@@ -241,6 +269,9 @@ def mostrar_imagenes_graf_2(pil_img):
     imagen_de_grafico2.configure(image=image_tk)
     imagen_de_grafico2.image = image_tk
 
+
+
+
 ##############################################################################################################################
 
                                                         #INTERFAZ
@@ -248,11 +279,12 @@ def mostrar_imagenes_graf_2(pil_img):
 ###############################################################################################################################
 
 #etiquetas que faltan
-#user_total
-#user_etiq_max
-#boton_imprimir_usuarios
-#data_incomp
-
+#user_total --
+#user_etiq_max --
+#boton_imprimir_usuarios ¿¿¿¿¿¿¿
+#data_incomp--
+#etiqueta_total--
+#los cuadros de texto de usuarios aun no devuelve los valores que debe mostrar al hacerle ver usuario
 
 ventana = tk.Tk() ##ventana
 ventana.title("Gestor de actividades físicas")
@@ -300,7 +332,7 @@ fra_ter_der_int.place(x=8, y=0)
 boton_imprimir_usuarios = tk.Button(fra_ter_der_int, text="Generar listado", command=abrir_ventana_secundaria, font=("Calibri", 13), width=12)##
 boton_imprimir_usuarios.place(y=4, x=96)
 
-boton_actualizar_reporte = tk.Button(fra_ter_der_int, text="Actualizar", command=prueba_botones, font=("Calibri", 13), width=12)##
+boton_actualizar_reporte = tk.Button(fra_ter_der_int, text="Actualizar", command=actualizar, font=("Calibri", 13), width=12)##
 boton_actualizar_reporte.place(y=47, x=96)
 
 fra_ter_izq_int=tk.Frame(frame_tercero_izquierda, bg="white", width=385, height=89)
@@ -310,10 +342,8 @@ etiq_user_max_pago = tk.Label(fra_ter_izq_int, bg="white", text="Usuario que má
 etiq_user_max_pago.place(y=14, x=21)
 
 user_etiq_max = tk.IntVar()
-user_etiq_max_label=tk.Label(fra_ter_izq_int, bg="white", text="prueba", textvariable=user_etiq_max, font= ("Calibri", 20, "bold") )
+user_etiq_max_label=tk.Label(fra_ter_izq_int, bg="white", text="", textvariable=user_etiq_max, font= ("Calibri", 20, "bold") )
 user_etiq_max_label.place(x=172, y=29)
-
-user_etiq_max.set("1130619640") ####para retirar#####-------------------------------------------#########
 
 #################### Frame segundo
 
@@ -329,13 +359,13 @@ frame_segundo_derecha.place(x=424, y=0)
 fra_seg_izq_int= tk.Frame(frame_segundo_izquierda, bg="white", width=385, height=276)
 fra_seg_izq_int.place(x=31, y=9)
 
-imagen_de_grafico1= tk.Label(fra_seg_izq_int, bg="white")
+imagen_de_grafico1= tk.Label(fra_seg_izq_int, bg="white")###########
 imagen_de_grafico1.place(x=0, y=0)
 
 fra_seg_der_int= tk.Frame(frame_segundo_derecha, bg="white", width=338, height=276)
 fra_seg_der_int.place(x=8, y=9)
 
-imagen_de_grafico2= tk.Label(fra_seg_der_int, bg="white")
+imagen_de_grafico2= tk.Label(fra_seg_der_int, bg="white")############
 imagen_de_grafico1.place(x=0, y=0)
 
 ################################### FRAME PRIMERO
@@ -360,7 +390,7 @@ etiq_incomp_data = tk.Label(frame_primero, bg="white", text="Datos incompletos",
 etiq_incomp_data.place(x=256 , y=107)
 
 data_incomp = tk.IntVar()
-user_etiq_data_incompl=tk.Label(frame_primero, bg="white", textvariable=user_etiq_max, font= ("Calibri", 18, "bold") ) ########
+user_etiq_data_incompl=tk.Label(frame_primero, bg="white", textvariable=data_incomp, font= ("Calibri", 18, "bold") ) ########
 user_etiq_data_incompl.place(x=259, y=128)
 
 frame_sup_3 = tk.Frame(frame_primero, bg="white", width=173, height=158)
@@ -394,7 +424,7 @@ usuarios_frame = tk.Frame(marco_contenido, bg="#eff1f3")
 marco_usuario = tk.LabelFrame(usuarios_frame, text="Ingreso Usuario", width=697, height=333, font=("Verdana", 11, "bold"))
 marco_usuario.place(x=40, y=37)
 
-id_usuario = tk.IntVar()
+id_usuario = tk.StringVar()
 entrada_identidad_entry = tk.Entry(marco_usuario, textvariable=id_usuario, width=60, font=("helvetica", 10))
 entrada_identidad_entry.place(x=176, y=41)
 
@@ -402,11 +432,11 @@ nombre_usuario = tk.StringVar()
 entrada_nombre_us_entry = tk.Entry(marco_usuario, textvariable=nombre_usuario, width=60, font=("helvetica", 10))
 entrada_nombre_us_entry.place(x=176, y=91)
 
-edad_usuario = tk.StringVar()
+edad_usuario = tk.IntVar()
 entrada_edad_us_entry = tk.Entry(marco_usuario, textvariable=edad_usuario, width=60, font=("helvetica", 10))
 entrada_edad_us_entry.place(x=176, y=142)
 
-meses_usuario = tk.StringVar()
+meses_usuario = tk.IntVar()
 entrada_meses_us_entry = tk.Entry(marco_usuario, textvariable=meses_usuario, width=60, font=("helvetica", 10))
 entrada_meses_us_entry.place(x=176, y=192)
 
@@ -422,13 +452,13 @@ etiq_edad.place(x=115, y=156)
 etiq_meses=tk.Label(marco_usuario, text="Meses:", font=("calibri", 10))
 etiq_meses.place(x=105, y=205)
 
-bot_ver_usuario = tk.Button(usuarios_frame, text="Ver usuario", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_ver_usuario = tk.Button(usuarios_frame, text="Ver usuario", command=ver_usuario, font=("Calibri", 13), width=12)
 bot_ver_usuario.place(x=595, y=392)
-bot_registrar_usuario=tk.Button(usuarios_frame, text="Registrar", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_registrar_usuario=tk.Button(usuarios_frame, text="Registrar", command=reg_usuario, font=("Calibri", 13), width=12)
 bot_registrar_usuario.place(x=595, y=442)
-bot_modificar_usuario=tk.Button(usuarios_frame, text="Modificar", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_modificar_usuario=tk.Button(usuarios_frame, text="Modificar", command=modificar_usuario, font=("Calibri", 13), width=12)
 bot_modificar_usuario.place(x=595, y=492)
-bot_eliminar_usuario=tk.Button(usuarios_frame, text="Eliminar", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_eliminar_usuario=tk.Button(usuarios_frame, text="Eliminar", command=eliminar_usuario, font=("Calibri", 13), width=12)
 bot_eliminar_usuario.place(x=595, y=543)
 
 
@@ -439,8 +469,8 @@ facturacion_frame = tk.Frame(marco_contenido, bg="#eff1f3")
 marco_facturacion = tk.LabelFrame(facturacion_frame, text="Facturación", width=697, height=333, font=("Verdana", 11, "bold"))
 marco_facturacion.place(x=40, y=37)
 
-cedula_usuario = tk.IntVar()
-entrada_cedula_entry = tk.Entry(marco_facturacion, width=60, textvariable=id_usuario, font=("helvetica", 10))
+cedula_usuario_fact = tk.IntVar()
+entrada_cedula_entry = tk.Entry(marco_facturacion, width=60, textvariable=cedula_usuario_fact, font=("helvetica", 10))
 entrada_cedula_entry.place(x=176, y=41)
 
 lista_actividad = tk.StringVar() #es la lista
@@ -459,18 +489,18 @@ cant_actividad = tk.IntVar()
 entrada_cantidad_entry = tk.Entry(marco_facturacion, width=20, textvariable=cant_actividad, font=("helvetica", 10))
 entrada_cantidad_entry.place(x=453, y=101)
 
-etiq_cantidad=tk.Label(marco_facturacion, text="Cantidad:", font=("calibri", 10), width=20)
-etiq_cantidad.place(x=358, y=101)
+etiq_cantidad=tk.Label(marco_facturacion, text="Cantidad:", font=("calibri", 10))
+etiq_cantidad.place(x=350, y=101)
 
 
-bot_guardar = tk.Button(facturacion_frame, text="Guardar", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_guardar = tk.Button(facturacion_frame, text="Guardar", command=guardar, font=("Calibri", 13), width=12)
 bot_guardar.place(x=595, y=392)
-bot_enviar=tk.Button(facturacion_frame, text="Enviar", command=prueba_botones, font=("Calibri", 13), width=12)
+bot_enviar=tk.Button(facturacion_frame, text="Enviar", command=enviar, font=("Calibri", 13), width=12)
 bot_enviar.place(x=595, y=442)
 
 
 etiqueta_total = tk.IntVar()
-etiqueta_total_label=tk.Label(facturacion_frame, bg="#eff1f3", text="prueba", textvariable=user_etiq_max, font= ("Calibri", 30, "bold") ) #######
+etiqueta_total_label=tk.Label(facturacion_frame, bg="#eff1f3", text="prueba", textvariable=etiqueta_total, font= ("Calibri", 30, "bold") ) #######
 etiqueta_total_label.place(x=102, y=392)
 
 etiqueta_pesos = tk.Label(facturacion_frame, bg="#eff1f3", text="$", font= ("Calibri", 30, "bold"))
