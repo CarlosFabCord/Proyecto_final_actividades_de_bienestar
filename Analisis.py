@@ -16,24 +16,29 @@ def pasar_a_pil(grafico):
   buffer.seek(0)
   return Image.open(buffer) #abre lo que hay en el buffer      
 
-class Analisis():
+class Analisis:
   def __init__(self,base_personas,base_facturacion):
     self.base_personas=base_personas
     self.base_facturacion=base_facturacion
 
 
   def graficar_barras(self):
+    
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)   
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="RUMBA"]
+    
+    sns.set_theme(style="whitegrid")
+
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="RUMBA"]
     sin_duplicados_rumba=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="SPINING"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="SPINING"]
     sin_duplicados_spining=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FORTALECIMIENTO"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="FORTALECIMIENTO"]
     sin_duplicados_fortalecimiento=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
-    tabla_actividad=self.base_facturacion[self.base_facturacion['Actividad']=="FISIOTERAPIA"]
+    tabla_actividad=DataFrame_facturacion[DataFrame_facturacion['Actividad']=="FISIOTERAPIA"]
     sin_duplicados_fisioterapia=tabla_actividad.drop_duplicates(subset='No. de identidad', keep="first")
 
 
@@ -41,58 +46,107 @@ class Analisis():
     df_spining=pd.DataFrame(sin_duplicados_spining)
     df_fortalecimiento=pd.DataFrame(sin_duplicados_fortalecimiento)
     df_fisioterapia=pd.DataFrame(sin_duplicados_fisioterapia)
-    df_rumba['No. de identidad'].value_counts().sum()
+        
     valor_rumba = df_rumba['No. de identidad'].value_counts().sum()
     valor_spining = df_spining['No. de identidad'].value_counts().sum()
     valor_fortalecimiento = df_fortalecimiento['No. de identidad'].value_counts().sum()
     valor_fisioterapia = df_fisioterapia['No. de identidad'].value_counts().sum()
 
     diccionario_valores = {
-    'Rumba': int(valor_rumba),
-    'Spinning': int(valor_spining),
-    'Fortalecimiento': int(valor_fortalecimiento),
-    'Fisioterapia': int(valor_fisioterapia)
-    }
+        'Rumba': [valor_rumba],
+        'Spinning': [valor_spining],
+        'Fortalecimiento': [valor_fortalecimiento],
+        'Fisioterapia': [valor_fisioterapia]
+        }
 
-    db = pd.DataFrame(diccionario_valores)
-    cantidad_clases = db[['Rumba', 'Spinning', 'Fortalecimiento', 'Fisioterapia']]
+    db = pd.DataFrame(diccionario_valores,index=["clase", "Inscritos"]).T
+    #cantidad_clases = db[['Rumba', 'Spinning', 'Fortalecimiento', 'Fisioterapia']]
+    colores_personalizados = ['#139bb3', '#fbab3b', '#5e60ab', '#f1574b'] 
     clases = ['Spinning','Fisioterapia','Rumba','Fortalecimiento']
-    grafico_pie = sns.barplot(data= db, x= clases , y= cantidad_clases)
-    plt.title("Grafico de usuarios por clase", fontsize=7)
-    plt.xlabel(clases, fontsize=6)
-    plt.ylabel(cantidad_clases, fontsize=6)
-    plt.tick_params(axis='x', labelsize=6)
-    return pasar_a_pil(grafico_pie)
+    plt.figure(figsize=(3.85,2.76), dpi=100)
+    grafico_pie = sns.barplot(data=db, x= clases, y="Inscritos", palette=colores_personalizados, edgecolor=None)
+    plt.title("Usuarios por actividad", fontsize=12)
+    
+    plt.grid(axis='y', color='lightgray', linestyle='--', linewidth=0.7)
+    plt.tick_params(axis='x', labelsize=9)
+    sns.despine(left=True, bottom=True)
+    plt.tight_layout()
+    figura=grafico_pie.get_figure()
+    return pasar_a_pil(figura)
+  
+  ################################################### CIRCULAR ####################################################3
   
   def grafico_circular(self): 
     
-    colores = ["red","green", "blue", "yellow"]
-    grafico = plt.pie(self.base_facturacion['Actividad'], labels=self.base_facturacion['Actividad'].index, colors=colores, shadow=True, textprops={'fontsize':6})
-    plt.title("Inscripciones por actividad")
-    return pasar_a_pil(grafico)
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)
+    conteos_de_actividad = DataFrame_facturacion['Actividad'].value_counts()
+
+    colores = ["#286fb7","#36a24b", "#f79033", "#716ab0"]
+    
+    fig, ax = plt.subplots(figsize=(3.38, 2.76), dpi=100)  
+    wedges, _ = ax.pie(conteos_de_actividad, colors=colores[:len(conteos_de_actividad)],wedgeprops=dict(width=0.6),startangle=90)
+    ax.legend(      wedges,
+        conteos_de_actividad,
+        title="",
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        ncol=2,  # número de columnas
+        fontsize=9,
+        frameon=False)
+    centro = plt.Circle((0, 0), 0.70, fc='white') 
+    fig.gca().add_artist(centro)
+
+    ax.axis('equal')  # Hace que el gráfico sea un círculo
+
+    plt.title("Inscripciones por actividad", fontsize=10)
+    plt.tight_layout()
+
+    return pasar_a_pil(fig)
+  ############################################################################################################
 
   def total_usuarios(self):
-    cantidad_total = self.base_personas['No. identidad'].sum()
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+    cantidad_total = DataFrame_personas['No. identidad'].count()
     return cantidad_total
     
-  def incompletos(self):                                             
+  def incompletos(self):
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+
     columnas_verificar = ["No. identidad", "Nombre", "Edad", "Meses"]
   
-    filas_nulos = self.base_personas[self.base_personas[columnas_verificar].isnull().any(axis=1)]
+    filas_nulos = DataFrame_personas[DataFrame_personas[columnas_verificar].isnull().any(axis=1)]
+    print(filas_nulos)
 
     cantidad_filas_nulas = len(filas_nulos)
 
     return cantidad_filas_nulas
 
   def promedio_pagos(self):
-    pagos = self.base_personas["Valor_acomulado"].sum()
-    promedio = pagos/len(self.base_personas["Valor_acomulado"])
-    return promedio
+
+    DataFrame_personas = pd.read_csv(self.base_personas)
+    promedio = DataFrame_personas["Monto acumulado"].mean()
     
-  def actividad_mas_demandada(self):
-    actividad = max(self.base_facturacion["Actividad"].value_counts().tolist())
+    return round(promedio, 1)
+    
+  def actividad_mas_demandada(self):   
+    
+    DataFrame_facturacion = pd.read_csv(self.base_facturacion)
+    conteo = DataFrame_facturacion["Actividad"].value_counts()
+    actividad_mas_inscrita = conteo.idxmax() 
+    actividad = actividad_mas_inscrita
+
     return actividad
   
-  def mas_paga(self):
-      pagos =  max(self.base_personas["Valor acomulado"].tolist())
-      return pagos
+  def mas_paga(self):      
+      
+      archivo_existe = os.path.isfile(self.base_personas)
+      if archivo_existe==True:
+        DataFrame_personas = pd.read_csv(self.base_personas)
+        pagos =  max(DataFrame_personas["Monto acumulado"].tolist())
+        return pagos
+      else:
+        messagebox.showerror("Error", "El archivo no existe")
+  
+  
